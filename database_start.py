@@ -1,21 +1,22 @@
 from sqlalchemy import create_engine, Column, Integer, String, MetaData, Table, ForeignKey, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
-import bcrypt
 from dotenv import load_dotenv
+from urllib.parse import urlparse
+from datetime import datetime
 import os
 import psycopg2
-from datetime import datetime
+import bcrypt
+
 
 load_dotenv()
 
-USER = os.getenv("user")
-PASSWORD = os.getenv("password")
-HOST = os.getenv("host")
-PORT = os.getenv("port")
-DBNAME = os.getenv("dbname")
-DATABASE_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
-engine = create_engine(DATABASE_URL, echo=True)
+tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+
+engine = create_engine(
+    f"postgresql+psycopg2://{tmpPostgres.username}:{tmpPostgres.password}@{tmpPostgres.hostname}{tmpPostgres.path}?sslmode=require",
+    echo=True
+)
 
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -37,16 +38,6 @@ class User(Base):
     def __repr__(self):
         return f"<User(username='{self.username}', email='{self.email}', type='{self.type}')>"
     
-    def set_password(self, password):
-        password_bytes = password.encode('utf-8')
-        salt = bcrypt.gensalt()
-        self.password_hash = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
-    
-    def check_password(self, password):
-        password_bytes = password.encode('utf-8')
-        return bcrypt.checkpw(password_bytes, self.password_hash.encode('utf-8'))
-
-
 class Drugs(Base):
     __tablename__ = 'drugs'
     

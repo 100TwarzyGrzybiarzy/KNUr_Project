@@ -1,5 +1,6 @@
 from database_start import Base, User, Drugs, PharmacyWarehouse, PharmacyWarehouseDrugsJoin
 from datetime import datetime
+import bcrypt
 
 def add_user(session, username, password):
     new_user = User(username=username)
@@ -54,3 +55,11 @@ def add_drug_to_pharmacy(session, pharmacy_id, drug_id, quantity):
     session.commit()
     return drug_in_pharmacy
 
+def set_password(User, password):
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    User.password_hash = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+
+def check_password(self, User, password):
+    password_bytes = password.encode('utf-8')
+    return bcrypt.checkpw(password_bytes, User.password_hash.encode('utf-8'))
